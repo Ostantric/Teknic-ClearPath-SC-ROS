@@ -1,0 +1,7 @@
+################## ROS IGNORE ############################
+build/
+devel/
+.catkin_workspace
+src/CMakeLists.txt
+.vscode/
+*.code-workspace
