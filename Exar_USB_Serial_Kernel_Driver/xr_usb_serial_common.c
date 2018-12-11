@@ -1719,18 +1719,6 @@ static int xr_usb_serial_reset_resume(struct usb_interface *intf)
  * USB driver structure.
  */
 static const struct usb_device_id xr_usb_serial_ids[] = {
-	{ USB_DEVICE(0x04e2, 0x1410)},
-    { USB_DEVICE(0x04e2, 0x1411)},
-	{ USB_DEVICE(0x04e2, 0x1412)},
-	{ USB_DEVICE(0x04e2, 0x1414)},
-	{ USB_DEVICE(0x04e2, 0x1420)},
-    { USB_DEVICE(0x04e2, 0x1421)},
-	{ USB_DEVICE(0x04e2, 0x1422)},
-	{ USB_DEVICE(0x04e2, 0x1424)},
-	{ USB_DEVICE(0x04e2, 0x1400)},
-    { USB_DEVICE(0x04e2, 0x1401)},
-    { USB_DEVICE(0x04e2, 0x1402)},
-    { USB_DEVICE(0x04e2, 0x1403)},
     // Teknic COM4-HUB
     { USB_DEVICE(0x2890, 0x0213)},
 	{ }
