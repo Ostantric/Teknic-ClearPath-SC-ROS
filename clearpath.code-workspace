@@ -4,5 +4,11 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"condition_variable": "cpp",
+			"mutex": "cpp",
+			"sstream": "cpp"
+		}
+	}
 }

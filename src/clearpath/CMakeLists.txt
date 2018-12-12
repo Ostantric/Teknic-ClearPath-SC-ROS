@@ -6,9 +6,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   genmsg
 )
-#find_package(Threads REQUIRED) # cmake 2.*.* might need it
+find_package(Threads REQUIRED) # cmake 2.*.* might need it
 #generate_messages(DEPENDENCIES std_msgs)
-
+add_compile_options(-std=c++11) #supervisor threads
 catkin_package()
 
 include_directories(
@@ -45,9 +45,81 @@ sFoundationPkg/LibINI/src/dictionary.cpp
 sFoundationPkg/LibINI/src/iniparser.cpp
 )
 
-add_executable(clearpath_node src/example.cpp)
+add_executable(pub_example_node src/ROS_Examples/Publisher/Pub.cpp)
 
-target_link_libraries(clearpath_node 
+target_link_libraries(pub_example_node 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(sub_example_node src/ROS_Examples/Subscriber/Sub.cpp)
+target_link_libraries(sub_example_node 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(teleop_example_node src/ROS_Examples/Joystick/teleop.cpp)
+target_link_libraries(teleop_example_node 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(SDK_GPIO_Example src/SDK_Examples/GPIO/GPIO.cpp)
+target_link_libraries(SDK_GPIO_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(SDK_HelloWorld_Example src/SDK_Examples/HelloWorld/HelloWorld.cpp)
+target_link_libraries(SDK_HelloWorld_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(SDK_Homing_Example src/SDK_Examples/Homing/Homing.cpp)
+target_link_libraries(SDK_Homing_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+add_executable(SDK_Motion_Example src/SDK_Examples/Motion/Motion.cpp)
+target_link_libraries(SDK_Motion_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+
+add_executable(SDK_SingleThread_Example src/SDK_Examples/SingleThread/Axis.cpp src/SDK_Examples/SingleThread/SingleThreaded.cpp)
+target_link_libraries(SDK_SingleThread_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(SDK_MultiThread_Example src/SDK_Examples/MultiThread/Axis.cpp src/SDK_Examples/MultiThread/Supervisor.cpp src/SDK_Examples/MultiThread/MultiThreaded.cpp)
+target_link_libraries(SDK_MultiThread_Example 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(SDK_StatusAlert_Example src/SDK_Examples/StatusAlerts/StatusAlerts.cpp)
+target_link_libraries(SDK_StatusAlert_Example 
     sFoundation
     ${catkin_LIBRARIES}
     ${CMAKE_DL_LIBS}

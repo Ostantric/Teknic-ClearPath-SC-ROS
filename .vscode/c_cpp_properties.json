@@ -5,12 +5,16 @@
             "browse": {
                 "path": [
                     "${workspaceRoot}/**",
+                    "${workspaceRoot}/src/clearpath/SDK_Examples/*",
+                    "${workspaceRoot}/src/clearpath/include/SDK_Example_Header",
                     "/opt/ros/kinetic/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceRoot}/src/clearpath/SDK_Examples/*",
+                "${workspaceRoot}/src/clearpath/include/SDK_Example_Header",
                 "/opt/ros/kinetic/include"
             ],
             "defines": [],
