@@ -1,7 +1,8 @@
 ################## ROS IGNORE ############################
 build/
 devel/
+Exar_USB_Serial_Kernel_Driver/.*
 .catkin_workspace
 src/CMakeLists.txt
 #.vscode/
-#*.code-workspace
+*.code-workspace
