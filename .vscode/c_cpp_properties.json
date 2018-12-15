@@ -6,7 +6,7 @@
                 "path": [
                     "${workspaceRoot}/**",
                     "${workspaceRoot}/src/clearpath/SDK_Examples/*",
-                    "${workspaceRoot}/src/clearpath/include/SDK_Example_Header",
+                    "${workspaceRoot}/src/clearpath/include/**",
                     "/opt/ros/kinetic/include"
                 ],
                 "limitSymbolsToIncludedHeaders": true
@@ -14,8 +14,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceRoot}/src/clearpath/SDK_Examples/*",
-                "${workspaceRoot}/src/clearpath/include/SDK_Example_Header",
-                "/opt/ros/kinetic/include"
+                "${workspaceRoot}/src/clearpath/include/**",
+                "/opt/ros/kinetic/include",
+                "${workspaceFolder}/src/clearpath/include/ROS_Driver/inc"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

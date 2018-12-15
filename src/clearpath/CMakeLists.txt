@@ -13,39 +13,49 @@ catkin_package()
 
 include_directories(
  ${catkin_INCLUDE_DIRS}
- sFoundationPkg/inc/
- sFoundationPkg/inc/inc-pub/
- sFoundationPkg/inc/inc-private/linux/
- sFoundationPkg/inc/inc-private/sFound/
- sFoundationPkg/LibINI/inc/
- sFoundationPkg/LibLinuxOS/inc/
- sFoundationPkg/LibXML/inc/
- sFoundationPkg/inc/inc-private/
+ include/sFoundationPkg/inc/
+ include/sFoundationPkg/inc/inc-pub/
+ include/sFoundationPkg/inc/inc-private/linux/
+ include/sFoundationPkg/inc/inc-private/sFound/
+ include/sFoundationPkg/LibINI/inc/
+ include/sFoundationPkg/LibLinuxOS/inc/
+ include/sFoundationPkg/LibXML/inc/
+ include/sFoundationPkg/inc/inc-private/
+ include/ROS_Driver/inc/
 )
 
 add_library(sFoundation
-sFoundationPkg/sFoundation/src-linux/SerialLinux.cpp
-sFoundationPkg/sFoundation/src-linux/lnkAccessLinux.cpp
-sFoundationPkg/sFoundation/src/SerialEx.cpp
-sFoundationPkg/sFoundation/src/converterLib.cpp
-sFoundationPkg/sFoundation/src/cpmAPI.cpp
-sFoundationPkg/sFoundation/src/cpmClassImpl.cpp
-sFoundationPkg/sFoundation/src/iscAPI.cpp
-sFoundationPkg/sFoundation/src/lnkAccessCommon.cpp
-sFoundationPkg/sFoundation/src/meridianNet.cpp
-sFoundationPkg/sFoundation/src/netCmdAPI.cpp
-sFoundationPkg/sFoundation/src/netCoreFmt.cpp
-sFoundationPkg/sFoundation/src/sysClassImpl.cpp
-sFoundationPkg/LibXML/src/ErrCodeStr.cpp
-sFoundationPkg/LibXML/src/pugixml.cpp
-sFoundationPkg/LibLinuxOS/src/tekEventsLinux.cpp
-sFoundationPkg/LibLinuxOS/src/tekThreadsLinux.cpp
-sFoundationPkg/LibLinuxOS/src/version.cpp
-sFoundationPkg/LibINI/src/dictionary.cpp
-sFoundationPkg/LibINI/src/iniparser.cpp
+include/sFoundationPkg/sFoundation/src-linux/SerialLinux.cpp
+include/sFoundationPkg/sFoundation/src-linux/lnkAccessLinux.cpp
+include/sFoundationPkg/sFoundation/src/SerialEx.cpp
+include/sFoundationPkg/sFoundation/src/converterLib.cpp
+include/sFoundationPkg/sFoundation/src/cpmAPI.cpp
+include/sFoundationPkg/sFoundation/src/cpmClassImpl.cpp
+include/sFoundationPkg/sFoundation/src/iscAPI.cpp
+include/sFoundationPkg/sFoundation/src/lnkAccessCommon.cpp
+include/sFoundationPkg/sFoundation/src/meridianNet.cpp
+include/sFoundationPkg/sFoundation/src/netCmdAPI.cpp
+include/sFoundationPkg/sFoundation/src/netCoreFmt.cpp
+include/sFoundationPkg/sFoundation/src/sysClassImpl.cpp
+include/sFoundationPkg/LibXML/src/ErrCodeStr.cpp
+include/sFoundationPkg/LibXML/src/pugixml.cpp
+include/sFoundationPkg/LibLinuxOS/src/tekEventsLinux.cpp
+include/sFoundationPkg/LibLinuxOS/src/tekThreadsLinux.cpp
+include/sFoundationPkg/LibLinuxOS/src/version.cpp
+include/sFoundationPkg/LibINI/src/dictionary.cpp
+include/sFoundationPkg/LibINI/src/iniparser.cpp
+include/ROS_Driver/src/sFoundation_ROS.cpp
 )
 
-add_executable(pub_example_node src/ROS_Examples/Publisher/Pub.cpp)
+add_executable(client src/main.cpp)
+target_link_libraries(client 
+    sFoundation
+    ${catkin_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+
+add_executable(pub_example_node example/ROS_Examples/Publisher/Pub.cpp)
 
 target_link_libraries(pub_example_node 
     sFoundation
@@ -54,7 +64,7 @@ target_link_libraries(pub_example_node
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(sub_example_node src/ROS_Examples/Subscriber/Sub.cpp)
+add_executable(sub_example_node example/ROS_Examples/Subscriber/Sub.cpp)
 target_link_libraries(sub_example_node 
     sFoundation
     ${catkin_LIBRARIES}
@@ -62,15 +72,7 @@ target_link_libraries(sub_example_node
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(teleop_example_node src/ROS_Examples/Joystick/teleop.cpp)
-target_link_libraries(teleop_example_node 
-    sFoundation
-    ${catkin_LIBRARIES}
-    ${CMAKE_DL_LIBS}
-    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-add_executable(SDK_GPIO_Example src/SDK_Examples/GPIO/GPIO.cpp)
+add_executable(SDK_GPIO_Example example/SDK_Examples/GPIO/GPIO.cpp)
 target_link_libraries(SDK_GPIO_Example 
     sFoundation
     ${catkin_LIBRARIES}
@@ -78,7 +80,7 @@ target_link_libraries(SDK_GPIO_Example
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(SDK_HelloWorld_Example src/SDK_Examples/HelloWorld/HelloWorld.cpp)
+add_executable(SDK_HelloWorld_Example example/SDK_Examples/HelloWorld/HelloWorld.cpp)
 target_link_libraries(SDK_HelloWorld_Example 
     sFoundation
     ${catkin_LIBRARIES}
@@ -86,14 +88,14 @@ target_link_libraries(SDK_HelloWorld_Example
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(SDK_Homing_Example src/SDK_Examples/Homing/Homing.cpp)
+add_executable(SDK_Homing_Example example/SDK_Examples/Homing/Homing.cpp)
 target_link_libraries(SDK_Homing_Example 
     sFoundation
     ${catkin_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
 )
-add_executable(SDK_Motion_Example src/SDK_Examples/Motion/Motion.cpp)
+add_executable(SDK_Motion_Example example/SDK_Examples/Motion/Motion.cpp)
 target_link_libraries(SDK_Motion_Example 
     sFoundation
     ${catkin_LIBRARIES}
@@ -102,7 +104,7 @@ target_link_libraries(SDK_Motion_Example
 )
 
 
-add_executable(SDK_SingleThread_Example src/SDK_Examples/SingleThread/Axis.cpp src/SDK_Examples/SingleThread/SingleThreaded.cpp)
+add_executable(SDK_SingleThread_Example example/SDK_Examples/SingleThread/Axis.cpp example/SDK_Examples/SingleThread/SingleThreaded.cpp)
 target_link_libraries(SDK_SingleThread_Example 
     sFoundation
     ${catkin_LIBRARIES}
@@ -110,7 +112,7 @@ target_link_libraries(SDK_SingleThread_Example
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(SDK_MultiThread_Example src/SDK_Examples/MultiThread/Axis.cpp src/SDK_Examples/MultiThread/Supervisor.cpp src/SDK_Examples/MultiThread/MultiThreaded.cpp)
+add_executable(SDK_MultiThread_Example example/SDK_Examples/MultiThread/Axis.cpp example/SDK_Examples/MultiThread/Supervisor.cpp example/SDK_Examples/MultiThread/MultiThreaded.cpp)
 target_link_libraries(SDK_MultiThread_Example 
     sFoundation
     ${catkin_LIBRARIES}
@@ -118,7 +120,7 @@ target_link_libraries(SDK_MultiThread_Example
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
-add_executable(SDK_StatusAlert_Example src/SDK_Examples/StatusAlerts/StatusAlerts.cpp)
+add_executable(SDK_StatusAlert_Example example/SDK_Examples/StatusAlerts/StatusAlerts.cpp)
 target_link_libraries(SDK_StatusAlert_Example 
     sFoundation
     ${catkin_LIBRARIES}

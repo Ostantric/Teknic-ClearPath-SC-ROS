@@ -1,0 +1,11 @@
+<launch>
+    <!-- joy node -->
+    <param name="realtime_reg_status_publish_rate" value="150" type="int"/>
+    <param name="vel_limit_rpm" value="800" type="int"/>
+    <param name="acc_lim_per_sec" value="2000" type="int"/>
+    <param name="decel_lim_per_sec" value="800" type="int"/>
+    <param name="torq_percantage" value="100" type="int"/>
+
+    <node respawn="true" pkg="clearpath" type="client" name="servos_client"/>
+
+</launch>

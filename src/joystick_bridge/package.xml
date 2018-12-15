@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package>
+  <name>joystick_bridge</name>
+  <version>0.0.1</version>
+  <description>The Xbox 360 joystick bridge package</description>
+  <maintainer email="murat.terzi01@gmail.com">Murat Terzi</maintainer>
+  <author email="murat.terzi01@gmail.com">Murat Terzi</author>
+  <license>GPLv3</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>joy</build_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>joy</run_depend>
+  <run_depend>roscpp</run_depend>
+</package>

@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "HUB_PUB");
   ros::NodeHandle n;
   ros::Subscriber sub = n.subscribe("Node_Velocity", 1000, Node_VelocityCallback);
-  ros::Rate loop_rate(150);//you can go faster than this maybe 200hz. but if you want to go real fast with lowest 4 node latency then take a look at multithread example.
+  ros::Rate loop_rate(200);
   size_t portCount = 0;
 	std::vector<std::string> comHubPorts;
 	SysManager myMgr;							//Create System Manager myMgr
@@ -68,7 +68,10 @@ int main(int argc, char **argv)
     myPort->Nodes(0).Motion.VelLimit = VEL_LIM_RPM;				//Set Velocity Limit (RPM)
     myPort->Nodes(0).Limits.TrqGlobal.Value(TORQ_PERCENTAGE); // Set Torque MAX (%)
     //... more nodes can be added here
-    ros::spin();//Callbacks check
+    while (ros::ok()) {
+      ros::spinOnce();
+      loop_rate.sleep();
+    }
 
     //Disable nodes
     for (size_t iNode = 0; iNode < myPort->NodeCount(); iNode++) {
