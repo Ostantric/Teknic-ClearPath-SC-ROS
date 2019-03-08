@@ -4,12 +4,27 @@ project(clearpath)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  message_generation
   genmsg
 )
 find_package(Threads REQUIRED) # cmake 2.*.* might need it
 #generate_messages(DEPENDENCIES std_msgs)
 add_compile_options(-std=c++11) #supervisor threads
-catkin_package()
+
+add_message_files(
+    FILES
+   Servo.msg
+   ClearpathClient.msg
+   Port.msg
+)
+
+generate_messages(DEPENDENCIES 
+        std_msgs
+        clearpath
+        )
+catkin_package( 
+      CATKIN_DEPENDS message_runtime
+)
 
 include_directories(
  ${catkin_INCLUDE_DIRS}
@@ -56,7 +71,6 @@ target_link_libraries(client
 )
 
 add_executable(pub_example_node example/ROS_Examples/Publisher/Pub.cpp)
-
 target_link_libraries(pub_example_node 
     sFoundation
     ${catkin_LIBRARIES}
@@ -95,6 +109,7 @@ target_link_libraries(SDK_Homing_Example
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
 )
+
 add_executable(SDK_Motion_Example example/SDK_Examples/Motion/Motion.cpp)
 target_link_libraries(SDK_Motion_Example 
     sFoundation
@@ -102,7 +117,6 @@ target_link_libraries(SDK_Motion_Example
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
 )
-
 
 add_executable(SDK_SingleThread_Example example/SDK_Examples/SingleThread/Axis.cpp example/SDK_Examples/SingleThread/SingleThreaded.cpp)
 target_link_libraries(SDK_SingleThread_Example 

@@ -22,14 +22,7 @@ ClearPath_Driver::ClearPath_Driver()
       decel_lim_per_sec_(DEFAULT_DECEL_RPM_SEC_LIMIT),
       torq_percantage_(DEFAULT_TORQ_PERC_LIMIT),
       scale_angular_(DEFAULT_ANGULER_SCALE), EStop_Flag(false),
-      Release_Flag(false), scale_linear_(DEFAULT_LINEAR_SCALE),
-      current_velocity(DEFAULT_START_POINT),
-      current_position(DEFAULT_START_POINT),
-      difference_position(DEFAULT_START_POINT),
-      difference_velocity(DEFAULT_START_POINT),
-      desired_position(DEFAULT_START_POINT),
-      desired_velocity(DEFAULT_START_POINT),
-      current_velocity_command(DEFAULT_START_POINT) {
+      Release_Flag(false), scale_linear_(DEFAULT_LINEAR_SCALE) {
   nh_.param("realtime_reg_status_publish_rate", rtreg_status_publish_rate_,
             rtreg_status_publish_rate_);
   nh_.param("vel_limit_rpm", vel_limit_rpm_, vel_limit_rpm_);
@@ -42,13 +35,20 @@ ClearPath_Driver::ClearPath_Driver()
             scale_linear_); // linear axis becomes linear in twist
 
   rate = rtreg_status_publish_rate_;
-  vel_sub_ = nh_.subscribe<geometry_msgs::Twist>(
-      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback, this);
+  vel_sub_1 = nh_.subscribe<geometry_msgs::Twist>(
+      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_1, this);
+  vel_sub_2 = nh_.subscribe<geometry_msgs::Twist>(
+      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_2, this);
+  /*vel_sub_3 = nh_.subscribe<geometry_msgs::Twist>(
+      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_3, this);
+  vel_sub_4 = nh_.subscribe<geometry_msgs::Twist>(
+      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_4, this);*/
   estop_sub_ = nh_.subscribe<std_msgs::Bool>(
       "estop", 1000, &ClearPath_Driver::estopCallback, this);
   release_sub_ = nh_.subscribe<std_msgs::Bool>(
       "release_servos", 1000, &ClearPath_Driver::releaseServosCallback, this);
-  realtime_reg_pub_ = nh_.advertise<std_msgs::String>("realtime_reg", 10);
+  realtime_reg_pub_ =
+      nh_.advertise<clearpath::ClearpathClient>("realtime_reg", 10);
 }
 // Destructor
 ClearPath_Driver::~ClearPath_Driver() { disconnect(); }
@@ -73,189 +73,211 @@ int ClearPath_Driver::connect() {
   // check each port
 
   for (size_t port_n = 0; port_n < portCount; port_n++) {
-    temp_port.port = &Manager.Ports(port_n);
+    temp_port.getPort = &Manager.Ports(port_n);
     // portlist.push_back(&Manager.Ports(port_n));
 
-    ROS_INFO(" Port[%d]: state=%d, nodes=%d\n", temp_port.port->NetNumber(),
-             temp_port.port->OpenState(), temp_port.port->NodeCount());
-
+    ROS_INFO(" Port[%d]: state=%d, nodes=%d\n", temp_port.getPort->NetNumber(),
+             temp_port.getPort->OpenState(), temp_port.getPort->NodeCount());
+    servoinfolist.resize(temp_port.getPort->NodeCount());
     // Node init
-    for (size_t node_n = 0; node_n < temp_port.port->NodeCount(); node_n++) {
-      temp_port.port->Nodes(node_n).Status.AlertsClear();
-      temp_port.port->Nodes(node_n).Motion.NodeStop(STOP_TYPE_ABRUPT);
-      temp_port.port->Nodes(node_n).Motion.NodeStop(STOP_TYPE_CLR_ALL);
-      temp_port.port->Nodes(node_n).Setup.Ex.App.AutoRefresh(true);
-      temp_port.port->Nodes(node_n).EnableReq(true);
+    for (size_t node_n = 0; node_n < temp_port.getPort->NodeCount(); node_n++) {
+      temp_port.getPort->Nodes(node_n).Status.AlertsClear();
+      temp_port.getPort->Nodes(node_n).Motion.NodeStop(STOP_TYPE_ABRUPT);
+      temp_port.getPort->Nodes(node_n).Motion.NodeStop(STOP_TYPE_CLR_ALL);
+      temp_port.getPort->Nodes(node_n).Setup.Ex.App.AutoRefresh(true);
+      temp_port.getPort->Nodes(node_n).EnableReq(true);
 
       // Make sure we are talking to a ClearPath SC (advanced or basic model
       // will work)
-      if (temp_port.port->Nodes(node_n).Info.NodeType() !=
+      if (temp_port.getPort->Nodes(node_n).Info.NodeType() !=
               IInfo::CLEARPATH_SC_ADV &&
-          temp_port.port->Nodes(node_n).Info.NodeType() !=
+          temp_port.getPort->Nodes(node_n).Info.NodeType() !=
               IInfo::CLEARPATH_SC) {
         ROS_ERROR("In port %d Node %d is not a ClearPath-SC Motor\n", port_n,
                   node_n);
         return -1;
       }
-      if (!temp_port.port->Nodes(node_n).Setup.AccessLevelIsFull()) {
+      if (!temp_port.getPort->Nodes(node_n).Setup.AccessLevelIsFull()) {
         ROS_ERROR("Need a full access for Node %d under Port \n", node_n,
                   port_n);
         return -1;
       }
-      temp_port.servolist.push_back((&temp_port.port->Nodes(node_n)));
-      temp_port.servolist.at(node_n)->Motion.AccLimit =
+      temp_port.getServolist.push_back((&temp_port.getPort->Nodes(node_n)));
+      temp_port.getServolist.at(node_n)->Motion.AccLimit =
           acc_lim_per_sec_; // Set Acceleration Limit (RPM/Sec)
-      temp_port.servolist.at(node_n)->Motion.VelLimit =
+      temp_port.getServolist.at(node_n)->Motion.VelLimit =
           vel_limit_rpm_; // Set Velocity Limit (RPM)
-      temp_port.servolist.at(node_n)->Limits.TrqGlobal.Value(
+      temp_port.getServolist.at(node_n)->Limits.TrqGlobal.Value(
           torq_percantage_); // Set Torque MAX (%)
-      temp_port.servolist.at(node_n)->Motion.NodeStopDecelLim =
+      temp_port.getServolist.at(node_n)->Motion.NodeStopDecelLim =
           decel_lim_per_sec_; // Set Deceleration Limit (RPM/sec)
       // Autorefresh on
       // this might cause problems, check it later
-      temp_port.servolist.at(node_n)->Motion.VelCommanded.AutoRefresh(true);
-      temp_port.servolist.at(node_n)->Motion.VelMeasured.AutoRefresh(true);
-      temp_port.servolist.at(node_n)->Motion.PosnMeasured.AutoRefresh(true);
-      temp_port.servolist.at(node_n)->Motion.TrqMeasured.AutoRefresh(true);
-      temp_port.servolist.at(node_n)->Status.RT.AutoRefresh(true);
+      temp_port.getServolist.at(node_n)->Motion.VelCommanded.AutoRefresh(true);
+      temp_port.getServolist.at(node_n)->Motion.VelMeasured.AutoRefresh(true);
+      temp_port.getServolist.at(node_n)->Motion.PosnMeasured.AutoRefresh(true);
+      temp_port.getServolist.at(node_n)->Motion.TrqMeasured.AutoRefresh(true);
+      temp_port.getServolist.at(node_n)->Status.RT.AutoRefresh(true);
       // Zero out position
-      double posn = temp_port.servolist.at(node_n)->Motion.PosnMeasured.Value();
-      temp_port.servolist.at(node_n)->Motion.AddToPosition(-posn);
+      double posn = temp_port.getServolist.at(node_n)->Motion.PosnMeasured.Value();
+      temp_port.getServolist.at(node_n)->Motion.AddToPosition(-posn);
+      //std::fill(servoinfolist.begin(), servoinfolist.end(), 0.0);
+      
     }
 
-    // temp_port.servolist.at(0)->Info.UserID = "0";
-    // temp_port.servolist.at(1)->Info.UserID = "1";
-    // temp_port.servolist.at(2)->Info.UserID = "2";
-    // temp_port.servolist.at(3)->Info.UserID = "3";
+    temp_port.getServolist.at(0)->Info.UserID = "front_right";
+    temp_port.getServolist.at(1)->Info.UserID = "front_left";
+    // temp_port.getServolist.at(1)->Info.UserID = "1";
+    // temp_port.getServolist.at(2)->Info.UserID = "2";
+    // temp_port.getServolist.at(3)->Info.UserID = "3";
 
-    portlist.push_back(temp_port);
+    portlist.push_back(&temp_port);
   }
 }
 // Disconnect
 void ClearPath_Driver::disconnect() {
   for (int a = 0; a < portlist.size(); a++) {
-    for (size_t i = 0; i < portlist.at(0).servolist.size(); i++) {
-      portlist.at(0).servolist.at(i)->EnableReq(false);
-      delete portlist.at(a).servolist.at(i);
+    for (size_t i = 0; i < portlist.at(0)->getServolist.size(); i++) {
+      portlist.at(0)->getServolist.at(i)->EnableReq(false);
+      delete portlist.at(a)->getServolist.at(i);
     }
-    delete portlist.at(a).port;
+    delete portlist.at(a)->getPort;
   }
   Manager.PortsClose();
+  servoinfolist.shrink_to_fit();
+  portlist.shrink_to_fit();
+  servolist.shrink_to_fit();
 }
 
 // Publish Real-Time Stats
 void ClearPath_Driver::publish_rt_status() {
+  clearpath::ClearpathClient client;
+  clearpath::Port port;
+  clearpath::Servo servo;
+  client.numberOfPorts = portlist.size();
+  //ROS_INFO("listsize: %d", client.numberOfPorts);
+  for (int i = 0; i < portlist.size(); i++) {
+    port.port_id = portlist.at(i)->getPort->NetNumber();
+    port.numberOfServos = portlist.at(i)->getPort->NodeCount();
+    //ROS_INFO("servos: %d", port.numberOfServos);
+    for (int a = 0; a < portlist.at(i)->getServolist.size(); a++) {
+      servo.servo_id = portlist.at(i)->getServolist.at(a)->Info.UserID.Value();
 
-  for (int i = 0; i < portlist.at(0).servolist.size(); i++) {
-    servo_id = std::stoi(portlist.at(0).servolist.at(i)->Info.UserID.Value());
-    current_velocity =
-        portlist.at(0).servolist.at(i)->Motion.VelMeasured.Value();
-    current_position =
-        portlist.at(0).servolist.at(i)->Motion.VelMeasured.Value();
-    current_torque = portlist.at(0).servolist.at(i)->Motion.VelMeasured.Value();
-    ROS_INFO("position: %f, current_Velocity : %f", current_position,
-             current_velocity);
+      servo.position =
+          portlist.at(i)->getServolist.at(a)->Motion.PosnMeasured.Value();
+      servo.velocity =
+          portlist.at(i)->getServolist.at(a)->Motion.VelMeasured.Value();
+      servo.torque =
+          portlist.at(i)->getServolist.at(a)->Motion.TrqMeasured.Value();
+      //ROS_INFO("pos: %f", portlist.at(a)->getServolist.at(i)->Motion.PosnMeasured.Value());
+      port.Servos.push_back(servo);
+    }
   }
 
-  // ROS_INFO("hi");
+  client.header.stamp = ros::Time::now();
+  client.Ports.push_back(port);
+  realtime_reg_pub_.publish(client);
 }
 // Execute CM_VEL commands
 int a = 0; // temp port number init
-void ClearPath_Driver::cmdvelCallback(
-    const geometry_msgs::Twist::ConstPtr &msg) {
-
-  desired_velocity = (vel_limit_rpm_ / scale_linear_) * (msg->linear.x);
-  temp_rt_reg = portlist.at(a).servolist.at(0)->Status.RT.Value().cpm;
-  if (temp_rt_reg.Enabled) {
-    switch (temp_rt_reg.InMotion) {
-    case 0: // near zero from last check
-      if (!(-5 < desired_velocity && desired_velocity < 5)) {
-        if (temp_rt_reg.MoveBufAvail) {
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
-#ifdef DEBUG
-          ROS_INFO("near_zero,desired_velocity: %f, current_Velocity : %f",
-                   desired_velocity, current_velocity);
-#endif
-        }
-      } else {
-        portlist.at(a).servolist.at(0)->Motion.NodeStop(
-            STOP_TYPE_RAMP_AT_DECEL);
-        portlist.at(a).servolist.at(0)->Motion.NodeStopClear();
-      }
-      break;
-    case 1: // positive direction from last check
-      if (current_velocity_command > desired_velocity) {
-        if (desired_velocity > 0) {
+void ClearPath_Driver::send_command(int *b, const double *x){
+  int i = *b;
+  double c = *x;
+  servoinfolist.at(i).desired_velocity = (vel_limit_rpm_ / scale_linear_) * c;
+    temp_rt_reg = portlist.at(a)->getServolist.at(i)->Status.RT.Value().cpm;
+    if (temp_rt_reg.Enabled) {
+      //ROS_INFO("hi");
+      switch (temp_rt_reg.InMotion) {
+      case 0: // near zero from last check
+        if (!(-5 < servoinfolist.at(i).desired_velocity && servoinfolist.at(i).desired_velocity < 5)) {
           if (temp_rt_reg.MoveBufAvail) {
-            portlist.at(a).servolist.at(0)->Motion.MoveVelStart(
-                desired_velocity);
+            portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(
+                servoinfolist.at(i).desired_velocity);
+  #ifdef DEBUG
+          ROS_INFO("near_zero,servoinfolist.at(0).desired_velocity: %f, current_Velocity : %f",
+                   servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+  #endif
           }
-#ifdef DEBUG
-          ROS_INFO(
-              "positive-notavail,desired_velocity: %f, current_Velocity : %f",
-              desired_velocity, current_velocity);
-#endif
         } else {
-#ifdef DEBUG
-          ROS_INFO("positive-else,desired_velocity: %f, current_Velocity : %f",
-                   desired_velocity, current_velocity);
-#endif
-          portlist.at(a).servolist.at(0)->Motion.NodeStop(
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStop(
               STOP_TYPE_RAMP_AT_DECEL);
-          portlist.at(a).servolist.at(0)->Motion.NodeStopClear();
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStopClear();
         }
-      } else if (current_velocity_command < desired_velocity) {
+        break;
+      case 1: // positive direction from last check
+        if (servoinfolist.at(i).current_velocity_command >
+            servoinfolist.at(i).desired_velocity) {
+          if (servoinfolist.at(i).desired_velocity > 0) {
+            if (temp_rt_reg.MoveBufAvail) {
+              portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(
+                  servoinfolist.at(i).desired_velocity);
+            }
+    #ifdef DEBUG
+          ROS_INFO(
+              "positive-notavail,servoinfolist.at(i).desired_velocity: %f, current_Velocity : %f",
+              servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
+        } else {
+    #ifdef DEBUG
+          ROS_INFO("positive-else,servoinfolist.at(i).desired_velocity: %f, current_Velocity : %f",
+                   servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStop(
+              STOP_TYPE_RAMP_AT_DECEL);
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStopClear();
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
+        }
+      } else if (servoinfolist.at(i).current_velocity_command < servoinfolist.at(i).desired_velocity) {
         if (temp_rt_reg.AtTargetVel) {
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
         }
       } else {
         if (temp_rt_reg.MoveBufAvail) {
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
         } else {
-#ifdef DEBUG
-          ROS_INFO("positive-equals-notavail,desired_velocity: %f, "
+    #ifdef DEBUG
+          ROS_INFO("positive-equals-notavail,servoinfolist.at(i).desired_velocity: %f, "
                    "current_Velocity : %f",
-                   desired_velocity, current_velocity);
-#endif
+                   servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
         }
       }
       break;
     case 2: // negative direction from last check
-      if (current_velocity_command < desired_velocity) {
-        if (desired_velocity < 0) {
+      if (servoinfolist.at(i).current_velocity_command < servoinfolist.at(i).desired_velocity) {
+        if (servoinfolist.at(i).desired_velocity < 0) {
           if (temp_rt_reg.MoveBufAvail) {
-            portlist.at(a).servolist.at(0)->Motion.MoveVelStart(
-                desired_velocity);
+            portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(
+                servoinfolist.at(i).desired_velocity);
           }
-#ifdef DEBUG
+    #ifdef DEBUG
           ROS_INFO(
-              "negative-notavail,desired_velocity: %f, current_Velocity : %f",
-              desired_velocity, current_velocity);
-#endif
+              "negative-notavail,servoinfolist.at(i).desired_velocity: %f, current_Velocity : %f",
+              servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
         } else {
-#ifdef DEBUG
-          ROS_INFO("negative-else,desired_velocity: %f, current_Velocity : %f",
-                   desired_velocity, current_velocity);
-#endif
-          portlist.at(a).servolist.at(0)->Motion.NodeStop(
+    #ifdef DEBUG
+          ROS_INFO("negative-else,servoinfolist.at(i).desired_velocity: %f, current_Velocity : %f",
+                   servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStop(
               STOP_TYPE_RAMP_AT_DECEL);
-          portlist.at(a).servolist.at(0)->Motion.NodeStopClear();
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.NodeStopClear();
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
         }
-      } else if (current_velocity_command > desired_velocity) {
+      } else if (servoinfolist.at(i).current_velocity_command > servoinfolist.at(i).desired_velocity) {
         if (temp_rt_reg.AtTargetVel) {
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
         }
       } else {
         if (temp_rt_reg.MoveBufAvail) {
-          portlist.at(a).servolist.at(0)->Motion.MoveVelStart(desired_velocity);
+          portlist.at(a)->getServolist.at(i)->Motion.MoveVelStart(servoinfolist.at(i).desired_velocity);
         } else {
-#ifdef DEBUG
-          ROS_INFO("negative-equals-notavail,desired_velocity: %f, "
-                   "current_Velocity : %f",
-                   desired_velocity, current_velocity);
-#endif
+    #ifdef DEBUG
+          ROS_INFO("negative-equals-notavail,servoinfolist.at(i).desired_velocity: %f, "
+                   "current_Velocity : %f", 
+                   servoinfolist.at(i).desired_velocity, servoinfolist.at(i).current_velocity);
+    #endif
         }
       }
       break;
@@ -268,9 +290,35 @@ void ClearPath_Driver::cmdvelCallback(
       break;
       // nothing
     }
-    current_velocity_command = desired_velocity;
-  }
+    servoinfolist.at(i).current_velocity_command =
+        servoinfolist.at(i).desired_velocity;
+    }
 }
+void ClearPath_Driver::cmdvelCallback_1(
+    const geometry_msgs::Twist::ConstPtr &msg) {
+    int servo_no = 0;
+    const double vel = -msg->linear.x;
+    send_command(&servo_no,&vel);
+}
+void ClearPath_Driver::cmdvelCallback_2(
+    const geometry_msgs::Twist::ConstPtr &msg) {
+    int servo_no = 1;
+    const double vel = msg->linear.x;
+    send_command(&servo_no,&vel);
+}
+/*
+void ClearPath_Driver::cmdvelCallback_3(
+    const geometry_msgs::Twist::ConstPtr &msg) {
+    int servo_no = 2;
+    const double vel = msg->linear.x;
+    send_command(&servo_no,&vel);
+}
+void ClearPath_Driver::cmdvelCallback_4(
+    const geometry_msgs::Twist::ConstPtr &msg) {
+    int servo_no = 3;
+    const double vel = msg->linear.x;
+    send_command(&servo_no,&vel);
+}*/
 // Check for E-STOP
 void ClearPath_Driver::estopCallback(const std_msgs::Bool::ConstPtr &msg) {
 
@@ -279,12 +327,12 @@ void ClearPath_Driver::estopCallback(const std_msgs::Bool::ConstPtr &msg) {
 #ifdef DEBUG
     ROS_INFO("estop pressed");
 #endif
-    portlist.at(a).servolist.at(0)->Motion.NodeStop(STOP_TYPE_RAMP_AT_DECEL);
+    portlist.at(a)->getServolist.at(0)->Motion.NodeStop(STOP_TYPE_RAMP_AT_DECEL);
   } else {
 #ifdef DEBUG
     ROS_INFO("estop released");
 #endif
-    portlist.at(a).servolist.at(0)->Motion.NodeStopClear();
+    portlist.at(a)->getServolist.at(0)->Motion.NodeStopClear();
   }
 }
 // Check for Release/Unrelease
@@ -297,16 +345,16 @@ void ClearPath_Driver::releaseServosCallback(
 #ifdef DEBUG
     ROS_INFO("Servos-released");
 #endif
-    for (int i = 0; i < portlist.at(a).servolist.size(); i++) {
-      portlist.at(a).servolist.at(i)->Motion.NodeStop(STOP_TYPE_RAMP_AT_DECEL);
-      portlist.at(a).servolist.at(i)->EnableReq(false);
+    for (int i = 0; i < portlist.at(a)->getServolist.size(); i++) {
+      portlist.at(a)->getServolist.at(i)->Motion.NodeStop(STOP_TYPE_RAMP_AT_DECEL);
+      portlist.at(a)->getServolist.at(i)->EnableReq(false);
     }
   } else {
 #ifdef DEBUG
     ROS_INFO("Servos-Engaged");
 #endif DEBUG
-    for (int i = 0; i < portlist.at(a).servolist.size(); i++) {
-      portlist.at(a).servolist.at(i)->EnableReq(true);
+    for (int i = 0; i < portlist.at(a)->getServolist.size(); i++) {
+      portlist.at(a)->getServolist.at(i)->EnableReq(true);
     }
   }
 }

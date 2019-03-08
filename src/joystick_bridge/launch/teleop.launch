@@ -38,7 +38,7 @@
   <param name="xbox_button" value="8" type="int"/>
 
   <!-- publishing rate for cmd_vel -->
-  <param name="cmd_vel_hz" value="100" type="int"/>
+  <param name="cmd_vel_hz" value="25" type="int"/>
 
   <node pkg="joystick_bridge" type="xbox_controller" name="xbox_teleop"/>
 </launch>

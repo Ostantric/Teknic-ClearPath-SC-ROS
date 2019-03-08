@@ -1,3 +1,3 @@
-int port_id
-int numberOfServos
+int16 port_id
+int16 numberOfServos
 Servo[] Servos
