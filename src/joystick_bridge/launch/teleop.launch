@@ -9,36 +9,7 @@
     <param name="deadzone" value="0.25" />
 
   </node>
-  <!-- Axes & Buttons -->
-  <param name="axis_linear" value="1" type="int"/>
-  <param name="axis_angular" value="0" type="int"/>
-  <!-- scaling by 0.5 for cmd_vel -->
-  <param name="scale_linear" value="1" type="double"/>
-  <param name="scale_angular" value="1" type="double"/>
-
-  <!--start button - buttons[7] -->
-  <param name="start_button" value="7" type="int"/>
-
-  <!--start button - buttons[6] -->
-  <param name="end_button" value="6" type="int"/>
-
-  <!--x button - buttons[2] -->
-  <param name="x" value="2" type="int"/>
-
-  <!--b button - buttons[1] -->
-  <param name="b" value="1" type="int"/>
-
-  <!--up and down buttons - axes[7] - two outputs-->
-  <param name="updown" value="7" type="int"/>
-
-  <!--right and left buttons - axes[6] - two outputs -->
-  <param name="rightleft" value="6" type="int"/>
-
-  <!--Xbox Button button [4] -->
-  <param name="xbox_button" value="8" type="int"/>
-
-  <!-- publishing rate for cmd_vel -->
-  <param name="cmd_vel_hz" value="25" type="int"/>
+  
 
   <node pkg="joystick_bridge" type="xbox_controller" name="xbox_teleop" />
 </launch>
