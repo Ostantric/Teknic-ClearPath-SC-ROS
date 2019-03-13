@@ -2,16 +2,23 @@
     <!-- joy node -->
     <param name="realtime_reg_status_publish_rate" value="50" type="int"/>
     <param name="vel_limit_rpm" value="250" type="int"/>
-    <param name="acc_lim_per_sec" value="5000" type="int"/>
+    <param name="acc_lim_per_sec" value="2000" type="int"/>
     <param name="decel_lim_per_sec" value="800" type="int"/>
     <param name="torq_percantage" value="100" type="int"/>
+    <param name="wheel_radius" value="0.23495" type="double"/> <!-- 9.25 inches -->
+    <param name="wheel_radius_multiplier" value="1" type="double"/>
+    <param name="wheel_base" value="0.54" type="double"/> <!-- 21.5 inches -->
+    <param name="wheel_base_multiplier" value="1" type="double"/>
+    <param name="vehicle_width" value="0.9144" type="double"/><!-- 36 inches -->
+    <param name="vehicle_width_multiplier" value="1" type="double"/>
+    <param name="gear_reduction" value="15" type="double"/>
 
-    <node respawn="true" pkg="clearpath" type="client" name="servos_client"/>
+    <node respawn="true" pkg="clearpath" type="client" name="servos_client" output="screen"/>
     <!-- joy node -->
   <node respawn="true" pkg="joy" type="joy_node" name="Xbox_joy">
 
     <!-- device path -->
-    <param name="joystick_device_file" type="string" value="/dev/input/js0" />
+    <param name="joystick_device_file" type="string" value="/dev/input/js0"/>
 
     <!-- deadzone , amount that joystick has to move before axis will output non-zero value -->
     <param name="deadzone" value="0.25" />
@@ -21,8 +28,8 @@
   <param name="axis_linear" value="1" type="int"/>
   <param name="axis_angular" value="0" type="int"/>
   <!-- scaling by 0.5 for cmd_vel -->
-  <param name="scale_linear" value="0.5" type="double"/>
-  <param name="scale_angular" value="0.5" type="double"/>
+  <param name="scale_linear" value="1" type="double"/>
+  <param name="scale_angular" value="1" type="double"/>
 
   <!--start button - buttons[7] -->
   <param name="start_button" value="7" type="int"/>
@@ -48,6 +55,6 @@
   <!-- publishing rate for cmd_vel -->
   <param name="cmd_vel_hz" value="25" type="int"/>
 
-  <node pkg="joystick_bridge" type="xbox_controller" name="xbox_teleop"/>
+  <node pkg="joystick_bridge" type="xbox_controller" name="xbox_teleop" />
 
 </launch>

@@ -34,10 +34,12 @@ private:
   int x, y, xbox_button, a, b, rightleft, updown, start_button, end_button;
   int x_, b_, xbox_button_, rightleft_, updown_, start_button_, end_button_;
   int publish_rate_;
-  int linear_, angular_;
+  int linear_, angular_,vel_limit_rpm_;
   bool temp_estop;
   double l_scale_, a_scale_;
+  double gear_reduction_, wheel_radius_, wheel_base_, wheel_base_multiplier_, wheel_radius_multiplier_, vehicle_width_, vehicle_width_multiplier_;
   float x_linear = 0.0, z_angular = 0.0;
+  float linear_max = 0.0, angular_max = 0.0;
   void joyCallback(const sensor_msgs::Joy::ConstPtr &joy);
   void estopCallback(const std_msgs::Bool::ConstPtr &msg);
   ros::NodeHandle nh_; // create a handle
@@ -47,9 +49,11 @@ private:
 Teleop::Teleop()
     : // creating a function to get parameters and setting up
       l_scale_(DEFAULT_LINEAR_SCALE),
-      a_scale_(DEFAULT_ANGULER_SCALE), angular_(0), linear_(1), x_(2), b_(1),
+      a_scale_(DEFAULT_ANGULER_SCALE), angular_(1), linear_(1), x_(2), b_(1),
       updown_(7), rightleft_(6), start_button_(7), end_button_(6),
       xbox_button_(8),
+      vel_limit_rpm_(500),
+      gear_reduction_(15),
       publish_rate_(
           DEFAULT_CMD_VEL_HZ) { // including default axes, buttons and rate
   nh_.param("axis_linear", linear_, linear_);
@@ -64,6 +68,14 @@ Teleop::Teleop()
   nh_.param("updown", updown_, updown_);
   nh_.param("rightleft", rightleft_, rightleft_);
   nh_.param("cmd_vel_hz", publish_rate_, publish_rate_);
+  nh_.param("vel_limit_rpm", vel_limit_rpm_, vel_limit_rpm_);
+  nh_.param("gear_reduction", gear_reduction_, gear_reduction_);
+  nh_.param("wheel_radius", wheel_radius_, wheel_radius_);
+  nh_.param("wheel_radius_multiplier", wheel_radius_multiplier_, wheel_radius_multiplier_);
+  nh_.param("wheel_base", wheel_base_, wheel_base_);
+  nh_.param("wheel_base_multiplier", wheel_base_multiplier_, wheel_base_multiplier_);
+  nh_.param("vehicle_width", vehicle_width_, vehicle_width_);
+  nh_.param("vehicle_width_multiplier", vehicle_width_multiplier_, vehicle_width_multiplier_);
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
   estop_pub_ = nh_.advertise<std_msgs::Bool>("estop", 1);
   release_pub_ = nh_.advertise<std_msgs::Bool>("release_servos", 1);
@@ -73,6 +85,8 @@ Teleop::Teleop()
       nh_.subscribe<std_msgs::Bool>("estop", 1, &Teleop::estopCallback, this);
   EStop_Flag.data = false;
   Release_Flag.data = false;
+  linear_max=((wheel_radius_*2*3.14))*(vel_limit_rpm_/(60*gear_reduction_));
+  angular_max=((360*linear_max)/(2*3.14*vehicle_width_))/(360/(2*3.14));
 }
 // Destructor
 Teleop::~Teleop() {}
@@ -98,8 +112,8 @@ void Teleop::estopCallback(const std_msgs::Bool::ConstPtr &msg) {
 }
 // Read Joystick data
 void Teleop::joyCallback(const sensor_msgs::Joy::ConstPtr &joy) {
-  z_angular = a_scale_ * joy->axes[angular_];
-  x_linear = l_scale_ * joy->axes[linear_];
+  z_angular = angular_max * joy->axes[angular_] * a_scale_;
+  x_linear =  linear_max * joy->axes[linear_] * l_scale_;
   // get buttons from the joy array
   b = joy->buttons[b_];
   x = joy->buttons[x_];

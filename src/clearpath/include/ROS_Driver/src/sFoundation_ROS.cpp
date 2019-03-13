@@ -33,7 +33,13 @@ ClearPath_Driver::ClearPath_Driver()
             scale_angular_); // angular axis becomes axis in twist
   nh_.param("scale_linear", scale_linear_,
             scale_linear_); // linear axis becomes linear in twist
-
+  nh_.param("gear_reduction",gear_reduction_,gear_reduction_);
+  nh_.param("wheel_radius", wheel_radius_, wheel_radius_);
+  nh_.param("wheel_radius_multiplier", wheel_radius_multiplier_, wheel_radius_multiplier_);
+  nh_.param("wheel_base", wheel_base_, wheel_base_);
+  nh_.param("wheel_base_multiplier", wheel_base_multiplier_, wheel_base_multiplier_);
+  nh_.param("vehicle_width", vehicle_width_, vehicle_width_);
+  nh_.param("vehicle_width_multiplier", vehicle_width_multiplier_, vehicle_width_multiplier_);
   rate = rtreg_status_publish_rate_;
   vel_sub_1 = nh_.subscribe<geometry_msgs::Twist>(
       "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_1, this);
@@ -183,7 +189,7 @@ int a = 0; // temp port number init
 void ClearPath_Driver::send_command(int *b, const double *x){
   int i = *b;
   double c = *x;
-  servoinfolist.at(i).desired_velocity = (vel_limit_rpm_ / scale_linear_) * c;
+  servoinfolist.at(i).desired_velocity = c;
     temp_rt_reg = portlist.at(a)->getServolist.at(i)->Status.RT.Value().cpm;
     if (temp_rt_reg.Enabled) {
       //ROS_INFO("hi");
@@ -297,14 +303,24 @@ void ClearPath_Driver::send_command(int *b, const double *x){
 void ClearPath_Driver::cmdvelCallback_1(
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 0;
-    const double vel = -msg->linear.x;
-    send_command(&servo_no,&vel);
+    double vector;
+    right_rad_per_second_ = (msg->linear.x + msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
+    
+    //right_rad_per_second_=sqrt(pow(msg->linear.x,2)+pow((msg->angular.z*vehicle_width_)/2,2))/wheel_radius_;
+
+    const double vel_rpm = (right_rad_per_second_/(2*3.14)*60)*gear_reduction_;
+    
+    ROS_INFO("vel1: %f", vel_rpm);
+    send_command(&servo_no,&vel_rpm);
 }
 void ClearPath_Driver::cmdvelCallback_2(
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 1;
-    const double vel = msg->linear.x;
-    send_command(&servo_no,&vel);
+    left_rad_per_second_ = (msg->linear.x - msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
+    
+    const double vel_rpm = (left_rad_per_second_/(2*3.14)*60)*gear_reduction_;
+    ROS_INFO("vel2: %f", vel_rpm);
+    send_command(&servo_no,&vel_rpm);
 }
 /*
 void ClearPath_Driver::cmdvelCallback_3(

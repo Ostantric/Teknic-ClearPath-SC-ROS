@@ -66,6 +66,9 @@ private:
   int servo_id;
   Ports temp_port;
   double scale_linear_, scale_angular_;
+  double gear_reduction_, wheel_radius_, wheel_base_, wheel_base_multiplier_, wheel_radius_multiplier_, vehicle_width_, vehicle_width_multiplier_;
+  double right_rad_per_second_ = 0;
+  double left_rad_per_second_ = 0; 
   void cmdvelCallback_1(const geometry_msgs::Twist::ConstPtr &msg);
   void cmdvelCallback_2(const geometry_msgs::Twist::ConstPtr &msg);
   void cmdvelCallback_3(const geometry_msgs::Twist::ConstPtr &msg);
