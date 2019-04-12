@@ -300,41 +300,40 @@ void ClearPath_Driver::send_command(int *b, const double *x){
         servoinfolist.at(i).desired_velocity;
     }
 }
-void ClearPath_Driver::cmdvelCallback_1(
+//TODO:make these as one function with clearpath multi-threaded layer
+void ClearPath_Driver::cmdvelCallback_1(//servo 0
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 0;
-    double vector;
     right_rad_per_second_ = (msg->linear.x + msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
-    
     //right_rad_per_second_=sqrt(pow(msg->linear.x,2)+pow((msg->angular.z*vehicle_width_)/2,2))/wheel_radius_;
-
     const double vel_rpm = (right_rad_per_second_/(2*3.14)*60)*gear_reduction_;
-    
-    ROS_INFO("vel1: %f", vel_rpm);
+    ROS_INFO("vel0: %f", vel_rpm);
     send_command(&servo_no,&vel_rpm);
 }
-void ClearPath_Driver::cmdvelCallback_2(
+void ClearPath_Driver::cmdvelCallback_2(//servo 1
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 1;
     left_rad_per_second_ = (msg->linear.x - msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
-    
     const double vel_rpm = (left_rad_per_second_/(2*3.14)*60)*gear_reduction_;
-    ROS_INFO("vel2: %f", vel_rpm);
+    ROS_INFO("vel1: %f", vel_rpm);
     send_command(&servo_no,&vel_rpm);
 }
-/*
-void ClearPath_Driver::cmdvelCallback_3(
+void ClearPath_Driver::cmdvelCallback_3(//servo 2
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 2;
-    const double vel = msg->linear.x;
-    send_command(&servo_no,&vel);
+    left_rad_per_second_ = (msg->linear.x - msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
+    const double vel_rpm = (left_rad_per_second_/(2*3.14)*60)*gear_reduction_;
+    ROS_INFO("vel3: %f", vel_rpm);
+    send_command(&servo_no,&vel_rpm);
 }
-void ClearPath_Driver::cmdvelCallback_4(
+void ClearPath_Driver::cmdvelCallback_4(//servo 3
     const geometry_msgs::Twist::ConstPtr &msg) {
     int servo_no = 3;
-    const double vel = msg->linear.x;
-    send_command(&servo_no,&vel);
-}*/
+    right_rad_per_second_ = (msg->linear.x + msg->angular.z * (vehicle_width_*vehicle_width_multiplier_)/2.0)/wheel_radius_;
+    const double vel_rpm = (right_rad_per_second_/(2*3.14)*60)*gear_reduction_;
+    ROS_INFO("vel3: %f", vel_rpm);
+    send_command(&servo_no,&vel_rpm);
+}
 // Check for E-STOP
 void ClearPath_Driver::estopCallback(const std_msgs::Bool::ConstPtr &msg) {
 
