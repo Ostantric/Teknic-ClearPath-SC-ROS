@@ -45,10 +45,10 @@ ClearPath_Driver::ClearPath_Driver()
       "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_1, this);
   vel_sub_2 = nh_.subscribe<geometry_msgs::Twist>(
       "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_2, this);
-  /*vel_sub_3 = nh_.subscribe<geometry_msgs::Twist>(
+  vel_sub_3 = nh_.subscribe<geometry_msgs::Twist>(
       "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_3, this);
   vel_sub_4 = nh_.subscribe<geometry_msgs::Twist>(
-      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_4, this);*/
+      "cmd_vel", 1000, &ClearPath_Driver::cmdvelCallback_4, this);
   estop_sub_ = nh_.subscribe<std_msgs::Bool>(
       "estop", 1000, &ClearPath_Driver::estopCallback, this);
   release_sub_ = nh_.subscribe<std_msgs::Bool>(
@@ -133,6 +133,8 @@ int ClearPath_Driver::connect() {
 
     temp_port.getServolist.at(0)->Info.UserID = "front_right";
     temp_port.getServolist.at(1)->Info.UserID = "front_left";
+    temp_port.getServolist.at(2)->Info.UserID = "rear_right";
+    temp_port.getServolist.at(3)->Info.UserID = "rear_left";
     // temp_port.getServolist.at(1)->Info.UserID = "1";
     // temp_port.getServolist.at(2)->Info.UserID = "2";
     // temp_port.getServolist.at(3)->Info.UserID = "3";
