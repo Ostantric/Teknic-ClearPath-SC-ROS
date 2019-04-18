@@ -1,9 +1,9 @@
 <launch>
     <!-- joy node -->
     <param name="realtime_reg_status_publish_rate" value="50" type="int"/>
-    <param name="vel_limit_rpm" value="250" type="int"/>
-    <param name="acc_lim_per_sec" value="2000" type="int"/>
-    <param name="decel_lim_per_sec" value="800" type="int"/>
+    <param name="vel_limit_rpm" value="150" type="int"/>
+    <param name="acc_lim_per_sec" value="200" type="int"/>
+    <param name="decel_lim_per_sec" value="1500" type="int"/>
     <param name="torq_percantage" value="100" type="int"/>
     <param name="wheel_radius" value="0.23495" type="double"/> <!-- 9.25 inches -->
     <param name="wheel_radius_multiplier" value="1" type="double"/>
